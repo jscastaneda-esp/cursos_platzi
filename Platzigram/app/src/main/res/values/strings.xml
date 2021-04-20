@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Platzigram</string>
+    <string name="title_activity_referencia">ReferenciaActivity</string>
+    <string name="hint_username">Nombre de usuario</string>
+    <string name="hint_password">Contraseña</string>
+    <string name="textLogin">Login</string>
+    <string name="dont_have_account">¿No tienes cuenta?,</string>
+    <string name="create_here">crea una aquí</string>
+    <string name="hint_confirm_pass">Confirmar contraseña</string>
+    <string name="hint_user">Usuario</string>
+    <string name="hint_name">Nombre</string>
+    <string name="hint_email">Correo</string>
+    <string name="create_account">Únete</string>
+    <string name="toolbar_title_createaccount">Crear Cuenta</string>
+    <string name="username_card">Uriel Ramírez</string>
+    <string name="firstword_card">Hace</string>
+    <string name="timecard_card">4 día(s)</string>
+    <string name="likenumber_card">10</string>
+    <string name="search_tab">Buscar</string>
+    <string name="home_tab">Home</string>
+    <string name="profile_tab">Yo</string>
+    <string name="title_home_fragment">Home</string>
+    <string name="text_days">día(s)</string>
+    <string name="text_like">Me gusta</string>
+    <string name="transitionname_picture">transitionnamepicture</string>
+    <string name="textimage_detail">\"Todo copas en la playa\"</string>
+    <string name="lorem">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</string>
+    <string name="search_hint">Buscar fotos&#8230;</string>
+    <string name="hint_search">Buscar fotos&#8230;</string>
+    <string name="messageInputInvalid">Se deben ingresar los datos solicitados</string>
+    <string name="messageGenericError">Ocurrió el siguiente error:</string>
+    <string name="hint_title">Titulo</string>
+    <string name="hint_description">Descripción</string>
+    <string name="create_post">Crear Post</string>
+    <string name="menu_signout">Cerrar Sesión</string>
+    <string name="menu_about">Acerca de</string>
+</resources>
