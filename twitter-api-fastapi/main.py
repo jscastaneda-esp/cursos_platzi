@@ -51,6 +51,10 @@ class User(BaseUser):
     birth_date: date | None = Field(None)
 
 
+class UserRegister(User, UserLogin):
+    pass
+
+
 # - Tweets
 class Tweet(BaseModel):
     tweet_id: UUID = Field(...)
@@ -74,7 +78,19 @@ class Tweet(BaseModel):
     summary="Register a User",
     tags=["Users"]
 )
-def signup():
+def signup(user: UserRegister):
+    """
+    Signup
+
+    This path operation register a user in the app
+
+    Parameters:
+    - Request body parameter:
+        - **user: UserRegister**
+
+    Returns a json with the basic user information: **User**
+    """
+
     pass
 
 
