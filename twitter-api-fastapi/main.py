@@ -178,7 +178,17 @@ def delete_user():
     tags=["Tweets"]
 )
 def home():
-    return {"Twitter API": "Working!"}
+    """
+    Show all Tweets
+
+    This path operation shows all tweets in the app
+
+    Returns a json list with the basic tweets information: **list[Tweet]**
+    """
+
+    with open("./tweets.json", "r", encoding="utf-8") as f:
+        results = json.loads(f.read())
+        return results
 
 
 @app.post(
