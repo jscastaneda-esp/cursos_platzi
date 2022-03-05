@@ -2,10 +2,28 @@
 from enum import Enum
 
 # Pydantic
-from pydantic import BaseModel, EmailStr, Field, PositiveInt, SecretStr
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    Field,
+    PositiveInt,
+    SecretStr
+)
 
 # FastAPI
-from fastapi import Body, Cookie, FastAPI, File, Form, Header, Path, Query, UploadFile, status
+from fastapi import (
+    Body,
+    Cookie,
+    FastAPI,
+    File,
+    Form,
+    Header,
+    Path,
+    Query,
+    UploadFile,
+    status,
+    HTTPException
+)
 
 app = FastAPI()
 
@@ -162,9 +180,21 @@ def show_person(
 
 
 # Validations: Path parameters
+persons = [1, 2, 3, 4, 5]
+
+
 @app.get(
     path="/person/detail/{person_id}",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
 def show_person_by_id(person_id: int = Path(
     default=...,
@@ -173,10 +203,17 @@ def show_person_by_id(person_id: int = Path(
     description="This is the person identifier. It's greather that 0 and it's required",
     example=2
 )):
-    return {person_id: "It exists"}
+    if person_id not in persons:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="¡This person doesn't exists!"
+        )
 
+    return {person_id: "It exists!"}
 
 # Validations: Request Body
+
+
 @app.put(
     path="/person/{person_id}",
     response_model=PersonOut,
@@ -245,3 +282,6 @@ def post_image(
         "Format": image.content_type,
         "Size(kb)": round(len(image.file.read()) / 1024, ndigits=2)
     }
+
+
+#
