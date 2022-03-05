@@ -182,7 +182,8 @@ def create_person(person: Person = Body(...)):
     path="/person/detail",
     status_code=status.HTTP_200_OK,
     tags=["Persons"],
-    summary="Show details person saved in the app"
+    summary="Show details person saved in the app",
+    deprecated=True
 )
 def show_person(
     name: str | None = Query(
@@ -203,6 +204,8 @@ def show_person(
     )
 ):
     """
+    Deprecated for **Show details person saved by id in the app**
+
     Show Details Person
 
     This path operation show details person data saved in the database
@@ -405,6 +408,3 @@ def post_image(
         "Format": image.content_type,
         "Size(kb)": round(len(image.file.read()) / 1024, ndigits=2)
     }
-
-
-#
