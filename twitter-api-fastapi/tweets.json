@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "tweet_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "content": "My first tweet",
+    "created_at": "2022-03-05 11:40:43.256584",
+    "updated_at": "2022-03-05 16:40:55.802000+00:00",
+    "by": {
+      "user_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "email": "jcaatanedaesp@example.com"
+    }
+  },
+  {
+    "tweet_id": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+    "content": "My second tweet",
+    "created_at": "2022-03-05 11:40:43.256584",
+    "updated_at": "2022-03-05 16:40:55.802000+00:00",
+    "by": {
+      "user_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "email": "jcaatanedaesp@example.com"
+    }
+  },
+  {
+    "tweet_id": "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+    "content": "My third tweet",
+    "created_at": "2022-03-05 11:40:43.256584",
+    "updated_at": null,
+    "by": {
+      "user_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "email": "user@example.com"
+    }
+  }
+]
