@@ -65,10 +65,6 @@ class Tweet(BaseModel):
 
 
 # Path Operations
-@app.get("/")
-def home():
-    return {"Twitter API": "Working!"}
-
 
 # - Users
 @app.post(
@@ -116,7 +112,7 @@ def show_user():
 
 
 @app.put(
-    path="/users/{user_id}/update",
+    path="/users/{user_id}",
     response_model=User,
     status_code=status.HTTP_200_OK,
     summary="Update a User",
@@ -127,7 +123,7 @@ def update_user():
 
 
 @app.delete(
-    path="/users/{user_id}/delete",
+    path="/users/{user_id}",
     response_model=User,
     status_code=status.HTTP_200_OK,
     summary="Delete a User",
@@ -138,3 +134,56 @@ def delete_user():
 
 
 # - Tweets
+@app.get(
+    path="/",
+    response_model=list[Tweet],
+    status_code=status.HTTP_200_OK,
+    summary="Show all Tweets",
+    tags=["Tweets"]
+)
+def home():
+    return {"Twitter API": "Working!"}
+
+
+@app.post(
+    path="/post",
+    response_model=Tweet,
+    status_code=status.HTTP_201_CREATED,
+    summary="Post a Tweet",
+    tags=["Tweets"]
+)
+def post_tweet():
+    pass
+
+
+@app.get(
+    path="/tweets/{tweet_id}",
+    response_model=Tweet,
+    status_code=status.HTTP_200_OK,
+    summary="Show a Tweet",
+    tags=["Tweets"]
+)
+def show_tweet():
+    pass
+
+
+@app.put(
+    path="/tweets/{tweet_id}",
+    response_model=Tweet,
+    status_code=status.HTTP_200_OK,
+    summary="Update a Tweet",
+    tags=["Tweets"]
+)
+def update_tweet():
+    pass
+
+
+@app.delete(
+    path="/tweets/{tweet_id}",
+    response_model=Tweet,
+    status_code=status.HTTP_200_OK,
+    summary="Delete a Tweet",
+    tags=["Tweets"]
+)
+def delete_tweet():
+    pass
