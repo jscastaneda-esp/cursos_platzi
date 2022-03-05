@@ -125,7 +125,7 @@ class LoginOut(BaseModel):
     username: str = Field(
         default=...,
         max_length=20,
-        description="This is username of the person. It's required",
+        description="This is username the person. It's required",
         example="jscastaneda"
     )
     message: str = Field(
@@ -138,10 +138,19 @@ class LoginOut(BaseModel):
 @app.get(
     path="/",
     status_code=status.HTTP_200_OK,
-    tags=["Home"]
+    tags=["Home"],
+    summary="Show version app"
 )
-def home():
-    return {"Hello": "World"}
+def version():
+    """
+    Version app
+
+    This path operation show version app
+
+    Returns a version app
+    """
+
+    return "v1"
 
 
 # Request and Response Body
@@ -172,7 +181,8 @@ def create_person(person: Person = Body(...)):
 @app.get(
     path="/person/detail",
     status_code=status.HTTP_200_OK,
-    tags=["Persons"]
+    tags=["Persons"],
+    summary="Show details person saved in the app"
 )
 def show_person(
     name: str | None = Query(
@@ -192,6 +202,19 @@ def show_person(
         example=18
     )
 ):
+    """
+    Show Details Person
+
+    This path operation show details person data saved in the database
+
+    Parameters:
+    - Query parameters:
+        - **name: String** -> A name for search a person
+        - **age: Integer** -> An age for search a person
+
+    Returns a person model found
+    """
+
     return {name, age}
 
 
@@ -211,7 +234,8 @@ persons = [1, 2, 3, 4, 5]
                 }
             }
         }
-    }
+    },
+    summary="Show details person saved by id in the app"
 )
 def show_person_by_id(person_id: int = Path(
     default=...,
@@ -220,6 +244,18 @@ def show_person_by_id(person_id: int = Path(
     description="This is the person identifier. It's greather that 0 and it's required",
     example=2
 )):
+    """
+    Show Details Person By ID
+
+    This path operation show details person data saved in the database
+
+    Parameters:
+    - Path parameters:
+        - **person_id: Integer** -> A ID for search a person
+
+    Returns a person model found
+    """
+
     if person_id not in persons:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -235,7 +271,8 @@ def show_person_by_id(person_id: int = Path(
     path="/person/{person_id}",
     response_model=PersonOut,
     status_code=status.HTTP_201_CREATED,
-    tags=["Persons"]
+    tags=["Persons"],
+    summary="Update person in the app"
 )
 def update_person(
     person_id: int = Path(
@@ -247,6 +284,20 @@ def update_person(
     ),
     person: Person = Body(...)
 ):
+    """
+    Update Person
+
+    This path operation updates a person data in the database
+
+    Parameters:
+    - Path parameters:
+        - **person_id: Integer** -> A ID for search a person
+    - Request body parameter:
+        - **person: Person** -> A person model with data to save
+
+    Returns a person model with data saved
+    """
+
     return person.dict() | {"id": person_id}
 
 
@@ -254,12 +305,26 @@ def update_person(
     path="/login",
     response_model=LoginOut,
     status_code=status.HTTP_200_OK,
-    tags=["Persons"]
+    tags=["Persons"],
+    summary="SignIn person in the app"
 )
 def login(
     username: str = Form(...),
     password: str = Form(...)
 ):
+    """
+    SignIn Person
+
+    This path operation authenticate person in the app and validate credentials saved in the database
+
+    Parameters:
+    - Form parameters:
+        - **username: String** -> A username for authenticate in the app
+        - **password: String** -> A password for authenticate in the app
+
+    Returns a result message the authentication
+    """
+
     return LoginOut(username=username)
 
 
@@ -267,7 +332,8 @@ def login(
 @app.post(
     path="/contact",
     status_code=status.HTTP_200_OK,
-    tags=["Support"]
+    tags=["Support"],
+    summary="Contact with support the app"
 )
 def contact(
     first_name: str = Form(
@@ -289,17 +355,51 @@ def contact(
     user_agent: str | None = Header(None),
     ads: str | None = Cookie(None)
 ):
+    """
+    Contact with Support
+
+    This path operation contacts with support the app and solution problems
+
+    Parameters:
+    - Form parameters:
+        - **first_name: String** -> The first name person that request support in the app
+        - **last_name: String** -> The last name person that request support in the app
+        - **email: String** -> The person contact email that request support in the app
+        - **message: String** -> A detail the request support in the app
+
+    - Header parameters:
+        - **user_agent: String** -> A header for identified the type client
+
+    - Cookie parameters:
+        - **ads: String** -> A message sended from client app
+
+    Returns the user agent sended from client app
+    """
+
     return user_agent
 
 
 # Files
 @app.post(
     path="/post-image",
-    tags=["Files"]
+    tags=["Files"],
+    summary="Upload Image in the app"
 )
 def post_image(
     image: UploadFile = File(...)
 ):
+    """
+    Upload Image
+
+    This path operation allow uploads images in the app
+
+    Parameters:
+    - Multipart parameters:
+        - **image: File** -> A image from upload in the app
+
+    Returns info the uploaded image
+    """
+
     return {
         "Filename": image.filename,
         "Format": image.content_type,
