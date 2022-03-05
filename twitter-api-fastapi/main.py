@@ -24,8 +24,10 @@ class BaseUser(BaseModel):
 class UserLogin(BaseUser):
     password: str = Field(
         default=...,
-        min_length=8
+        min_length=8,
+        max_length=64
     )
+
 
 class User(BaseUser):
     first_name: str = Field(
