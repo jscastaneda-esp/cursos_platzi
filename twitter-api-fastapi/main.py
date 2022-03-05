@@ -4,6 +4,7 @@ from datetime import (
     datetime
 )
 from uuid import UUID
+import json
 
 # Pydantic
 from pydantic import (
@@ -14,6 +15,7 @@ from pydantic import (
 
 # FastAPI
 from fastapi import (
+    Body,
     FastAPI,
     status
 )
@@ -78,7 +80,7 @@ class Tweet(BaseModel):
     summary="Register a User",
     tags=["Users"]
 )
-def signup(user: UserRegister):
+def signup(user: UserRegister = Body(...)):
     """
     Signup
 
@@ -91,7 +93,15 @@ def signup(user: UserRegister):
     Returns a json with the basic user information: **User**
     """
 
-    pass
+    with open("./users.json", "r+", encoding="utf-8") as f:
+        results = json.loads(f.read())
+        user_dict = user.dict()
+        user_dict["user_id"] = str(user_dict["user_id"])
+        user_dict["birth_date"] = str(user_dict["birth_date"])
+        results.append(user_dict)
+        f.seek(0)
+        f.write(json.dumps(results, indent=2))
+        return user
 
 
 @app.post(
