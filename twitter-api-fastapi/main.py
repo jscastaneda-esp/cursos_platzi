@@ -3,6 +3,7 @@ from datetime import (
     date,
     datetime
 )
+from typing import Any, Callable, Iterable, TypeVar
 from uuid import UUID
 import json
 
@@ -17,6 +18,8 @@ from pydantic import (
 from fastapi import (
     Body,
     FastAPI,
+    HTTPException,
+    Path,
     status
 )
 
@@ -70,6 +73,29 @@ class Tweet(BaseModel):
     by: BaseUser = Field(...)
 
 
+# Utils
+_T = TypeVar("_T")
+
+
+def find(search: Callable[[_T], bool], iterable: Iterable[_T]):
+    list_filter = filter(search, iterable)
+
+    try:
+        return next(list_filter)
+    except StopIteration:
+        return None
+
+
+def findIndex(search: Callable[[int, _T], bool], iterable: Iterable[_T]):
+    index_found = -1
+    for (i, value) in enumerate(iterable):
+        if search(i, value):
+            index_found = i
+            break
+
+    return index_found
+
+
 # Path Operations
 
 # - Users
@@ -78,7 +104,16 @@ class Tweet(BaseModel):
     response_model=User,
     status_code=status.HTTP_201_CREATED,
     summary="Register a User",
-    tags=["Users"]
+    tags=["Users"],
+    responses={
+        409: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Conflit data"}
+                }
+            }
+        }
+    }
 )
 def signup(user: UserRegister = Body(...)):
     """
@@ -95,8 +130,16 @@ def signup(user: UserRegister = Body(...)):
 
     with open("./users.json", "r+", encoding="utf-8") as f:
         results = json.loads(f.read())
+        user_id_str = str(user.user_id)
+
+        index_found = findIndex(
+            lambda _, user: user["user_id"] == user_id_str, results)
+        if index_found > -1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="¡This user already exists!")
+
         user_dict = user.dict()
-        user_dict["user_id"] = str(user_dict["user_id"])
+        user_dict["user_id"] = user_id_str
         user_dict["birth_date"] = str(user_dict["birth_date"])
         results.append(user_dict)
         f.seek(0)
@@ -112,6 +155,7 @@ def signup(user: UserRegister = Body(...)):
     tags=["Users"]
 )
 def login():
+    # TODO: Falta implementar
     pass
 
 
@@ -141,10 +185,39 @@ def show_users():
     response_model=User,
     status_code=status.HTTP_200_OK,
     summary="Show a User",
-    tags=["Users"]
+    tags=["Users"],
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
-def show_user():
-    pass
+def show_user(user_id: UUID = Path(...)):
+    """
+    Show User by ID
+
+    This path operation show one user by ID in the app
+
+    Parameters:
+    - Path parameters:
+        - **user_id: UUID**
+
+    Returns a json object with the basic user information
+    """
+
+    with open("./users.json", "r", encoding="utf-8") as f:
+        results = json.loads(f.read())
+        user_id_str = str(user_id)
+        user = find(lambda user: user["user_id"] == user_id_str, results)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="¡This user doesn't exists!")
+
+        return user
 
 
 @app.put(
@@ -152,10 +225,50 @@ def show_user():
     response_model=User,
     status_code=status.HTTP_200_OK,
     summary="Update a User",
-    tags=["Users"]
+    tags=["Users"],
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
-def update_user():
-    pass
+def update_user(user_id: UUID = Path(...), user: UserRegister = Body(...)):
+    """
+    Update User
+
+    This path operation update one user in the app
+
+    Parameters:
+    - Path parameters:
+        - **user_id: UUID**
+    - Request body parameter:
+        - **user: UserRegister**
+
+    Returns a json object with the basic user information
+    """
+
+    with open("./users.json", "r+", encoding="utf-8") as f:
+        results: list = json.loads(f.read())
+        user_id_str = str(user_id)
+        index_found = findIndex(
+            lambda _, user: user["user_id"] == user_id_str, results)
+
+        if index_found == -1:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="¡This user doesn't exists!")
+
+        user_dict = user.dict()
+        user_dict["user_id"] = user_id_str
+        user_dict["birth_date"] = str(user_dict["birth_date"])
+        results[index_found] = user_dict
+        f.seek(0)
+        f.write(json.dumps(results, indent=2))
+        f.truncate()
+        return user
 
 
 @app.delete(
@@ -163,10 +276,46 @@ def update_user():
     response_model=User,
     status_code=status.HTTP_200_OK,
     summary="Delete a User",
-    tags=["Users"]
+    tags=["Users"],
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
-def delete_user():
-    pass
+def delete_user(user_id: UUID = Path(...)):
+    """
+    Delete User by ID
+
+    This path operation delete one user by ID in the app
+
+    Parameters:
+    - Path parameters:
+        - **user_id: UUID**
+
+    Returns a json object with the basic user information
+    """
+
+    with open("./users.json", "r+", encoding="utf-8") as f:
+        results: list = json.loads(f.read())
+        user_id_str = str(user_id)
+        index_found = findIndex(
+            lambda _, user: user["user_id"] == user_id_str, results)
+
+        if index_found == -1:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="¡This user doesn't exists!")
+
+        user = results[index_found]
+        del results[index_found]
+        f.seek(0)
+        f.write(json.dumps(results, indent=2))
+        f.truncate()
+        return user
 
 
 # - Tweets
@@ -217,7 +366,7 @@ def post_tweet(tweet: Tweet = Body(...)):
         tweet_dict["tweet_id"] = str(tweet_dict["tweet_id"])
         tweet_dict["created_at"] = str(tweet_dict["created_at"])
 
-        if tweet_dict["updated_at"]: #
+        if tweet_dict["updated_at"]:
             tweet_dict["updated_at"] = str(tweet_dict["updated_at"])
 
         tweet_dict["by"]["user_id"] = str(tweet_dict["by"]["user_id"])
@@ -236,6 +385,7 @@ def post_tweet(tweet: Tweet = Body(...)):
     tags=["Tweets"]
 )
 def show_tweet():
+    # TODO: Falta implementar
     pass
 
 
