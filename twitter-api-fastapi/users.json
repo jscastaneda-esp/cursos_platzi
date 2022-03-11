@@ -14,5 +14,13 @@
     "first_name": "Laura",
     "last_name": "Garrido",
     "birth_date": "1993-11-08"
+  },
+  {
+    "user_id": "3fa85f64-5717-4562-b3fc-2c963f66afb6",
+    "email": "example@example.com",
+    "password": "Test1234",
+    "first_name": "Example",
+    "last_name": "Test",
+    "birth_date": "2022-03-11"
   }
 ]
