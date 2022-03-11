@@ -3,6 +3,11 @@ from datetime import (
     date,
     datetime
 )
+from typing import (
+    Callable,
+    Iterable,
+    TypeVar
+)
 from uuid import UUID
 import json
 
@@ -17,14 +22,16 @@ from pydantic import (
 from fastapi import (
     Body,
     FastAPI,
+    HTTPException,
+    Path,
     status
 )
+from fastapi.encoders import jsonable_encoder
 
 app = FastAPI()
 
 
 # Models
-
 # - Users
 class BaseUser(BaseModel):
     user_id: UUID = Field(...)
@@ -70,15 +77,46 @@ class Tweet(BaseModel):
     by: BaseUser = Field(...)
 
 
-# Path Operations
+# Utils
+_T = TypeVar("_T")
 
+
+def find(search: Callable[[_T], bool], iterable: Iterable[_T]):
+    list_filter = filter(search, iterable)
+
+    try:
+        return next(list_filter)
+    except StopIteration:
+        return None
+
+
+def findIndex(search: Callable[[int, _T], bool], iterable: Iterable[_T]):
+    index_found = -1
+    for (i, value) in enumerate(iterable):
+        if search(i, value):
+            index_found = i
+            break
+
+    return index_found
+
+
+# Path Operations
 # - Users
 @app.post(
     path="/signup",
     response_model=User,
     status_code=status.HTTP_201_CREATED,
     summary="Register a User",
-    tags=["Users"]
+    tags=["Users"],
+    responses={
+        409: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Conflit data"}
+                }
+            }
+        }
+    }
 )
 def signup(user: UserRegister = Body(...)):
     """
@@ -95,10 +133,15 @@ def signup(user: UserRegister = Body(...)):
 
     with open("./users.json", "r+", encoding="utf-8") as f:
         results = json.loads(f.read())
-        user_dict = user.dict()
-        user_dict["user_id"] = str(user_dict["user_id"])
-        user_dict["birth_date"] = str(user_dict["birth_date"])
-        results.append(user_dict)
+        user_id_str = str(user.user_id)
+
+        index_found = findIndex(
+            lambda _, user: user["user_id"] == user_id_str, results)
+        if index_found > -1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="¡This user already exists!")
+
+        results.append(jsonable_encoder(user))
         f.seek(0)
         f.write(json.dumps(results, indent=2))
         return user
@@ -112,6 +155,7 @@ def signup(user: UserRegister = Body(...)):
     tags=["Users"]
 )
 def login():
+    # TODO: Falta implementar
     pass
 
 
@@ -141,10 +185,39 @@ def show_users():
     response_model=User,
     status_code=status.HTTP_200_OK,
     summary="Show a User",
-    tags=["Users"]
+    tags=["Users"],
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
-def show_user():
-    pass
+def show_user(user_id: UUID = Path(...)):
+    """
+    Show User by ID
+
+    This path operation show one user by ID in the app
+
+    Parameters:
+    - Path parameters:
+        - **user_id: UUID**
+
+    Returns a json object with the basic user information
+    """
+
+    with open("./users.json", "r", encoding="utf-8") as f:
+        results = json.loads(f.read())
+        user_id_str = str(user_id)
+        user = find(lambda user: user["user_id"] == user_id_str, results)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="¡This user doesn't exists!")
+
+        return user
 
 
 @app.put(
@@ -152,10 +225,47 @@ def show_user():
     response_model=User,
     status_code=status.HTTP_200_OK,
     summary="Update a User",
-    tags=["Users"]
+    tags=["Users"],
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
-def update_user():
-    pass
+def update_user(user_id: UUID = Path(...), user: UserRegister = Body(...)):
+    """
+    Update User
+
+    This path operation update one user in the app
+
+    Parameters:
+    - Path parameters:
+        - **user_id: UUID**
+    - Request body parameter:
+        - **user: UserRegister**
+
+    Returns a json object with the basic user information
+    """
+
+    with open("./users.json", "r+", encoding="utf-8") as f:
+        results: list = json.loads(f.read())
+        user_id_str = str(user_id)
+        index_found = findIndex(
+            lambda _, user: user["user_id"] == user_id_str, results)
+
+        if index_found == -1:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="¡This user doesn't exists!")
+
+        results[index_found] = jsonable_encoder(user)
+        f.seek(0)
+        f.write(json.dumps(results, indent=2))
+        f.truncate()
+        return user
 
 
 @app.delete(
@@ -163,10 +273,46 @@ def update_user():
     response_model=User,
     status_code=status.HTTP_200_OK,
     summary="Delete a User",
-    tags=["Users"]
+    tags=["Users"],
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
-def delete_user():
-    pass
+def delete_user(user_id: UUID = Path(...)):
+    """
+    Delete User by ID
+
+    This path operation delete one user by ID in the app
+
+    Parameters:
+    - Path parameters:
+        - **user_id: UUID**
+
+    Returns a json object with the basic user information
+    """
+
+    with open("./users.json", "r+", encoding="utf-8") as f:
+        results: list = json.loads(f.read())
+        user_id_str = str(user_id)
+        index_found = findIndex(
+            lambda _, user: user["user_id"] == user_id_str, results)
+
+        if index_found == -1:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="¡This user doesn't exists!")
+
+        user = results[index_found]
+        del results[index_found]
+        f.seek(0)
+        f.write(json.dumps(results, indent=2))
+        f.truncate()
+        return user
 
 
 # - Tweets
@@ -183,7 +329,7 @@ def home():
 
     This path operation shows all tweets in the app
 
-    Returns a json list with the basic tweets information: **list[Tweet]**
+    Returns a json list with the tweets information: **list[Tweet]**
     """
 
     with open("./tweets.json", "r", encoding="utf-8") as f:
@@ -196,7 +342,16 @@ def home():
     response_model=Tweet,
     status_code=status.HTTP_201_CREATED,
     summary="Post a Tweet",
-    tags=["Tweets"]
+    tags=["Tweets"],
+    responses={
+        409: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Conflit data"}
+                }
+            }
+        }
+    }
 )
 def post_tweet(tweet: Tweet = Body(...)):
     """
@@ -208,21 +363,19 @@ def post_tweet(tweet: Tweet = Body(...)):
     - Request Body parameter:
         - **tweet: Tweet**
 
-    Returns a json with the basic tweet information: **Tweet**
+    Returns a json with the tweet information: **Tweet**
     """
 
     with open("./tweets.json", "r+", encoding="utf-8") as f:
         results = json.loads(f.read())
-        tweet_dict = tweet.dict()
-        tweet_dict["tweet_id"] = str(tweet_dict["tweet_id"])
-        tweet_dict["created_at"] = str(tweet_dict["created_at"])
+        tweet_id_str = str(tweet.tweet_id)
+        index_found = findIndex(
+            lambda _, tweet: tweet["tweet_id"] == tweet_id_str, results)
+        if index_found > -1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="¡This tweet already exists!")
 
-        if tweet_dict["updated_at"]: #
-            tweet_dict["updated_at"] = str(tweet_dict["updated_at"])
-
-        tweet_dict["by"]["user_id"] = str(tweet_dict["by"]["user_id"])
-
-        results.append(tweet_dict)
+        results.append(jsonable_encoder(tweet))
         f.seek(0)
         f.write(json.dumps(results, indent=2))
         return tweet
@@ -233,10 +386,39 @@ def post_tweet(tweet: Tweet = Body(...)):
     response_model=Tweet,
     status_code=status.HTTP_200_OK,
     summary="Show a Tweet",
-    tags=["Tweets"]
+    tags=["Tweets"],
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
-def show_tweet():
-    pass
+def show_tweet(tweet_id: UUID = Path(...)):
+    """
+    Show Tweet by ID
+
+    This path operation show one tweet by ID in the app
+
+    Parameters:
+    - Path parameters:
+        - **tweet_id: UUID**
+
+    Returns a json object with the tweet information
+    """
+
+    with open("./tweets.json", "r", encoding="utf-8") as f:
+        results = json.loads(f.read())
+        tweet_id_str = str(tweet_id)
+        tweet = find(lambda tweet: tweet["tweet_id"] == tweet_id_str, results)
+        if not tweet:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="¡This tweet doesn't exists!")
+
+        return tweet
 
 
 @app.put(
@@ -244,10 +426,47 @@ def show_tweet():
     response_model=Tweet,
     status_code=status.HTTP_200_OK,
     summary="Update a Tweet",
-    tags=["Tweets"]
+    tags=["Tweets"],
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
-def update_tweet():
-    pass
+def update_tweet(tweet_id: UUID = Path(...), tweet: Tweet = Body(...)):
+    """
+    Update Tweet
+
+    This path operation update one tweet in the app
+
+    Parameters:
+    - Path parameters:
+        - **tweet_id: UUID**
+    - Request body parameter:
+        - **tweet: Tweet**
+
+    Returns a json object with the tweet information
+    """
+
+    with open("./tweets.json", "r+", encoding="utf-8") as f:
+        results: list = json.loads(f.read())
+        tweet_id_str = str(tweet_id)
+        index_found = findIndex(
+            lambda _, tweet: tweet["tweet_id"] == tweet_id_str, results)
+
+        if index_found == -1:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="¡This tweet doesn't exists!")
+
+        results[index_found] = jsonable_encoder(tweet)
+        f.seek(0)
+        f.write(json.dumps(results, indent=2))
+        f.truncate()
+        return tweet
 
 
 @app.delete(
@@ -255,7 +474,43 @@ def update_tweet():
     response_model=Tweet,
     status_code=status.HTTP_200_OK,
     summary="Delete a Tweet",
-    tags=["Tweets"]
+    tags=["Tweets"],
+    responses={
+        404: {
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Resource not found"}
+                }
+            }
+        }
+    }
 )
-def delete_tweet():
-    pass
+def delete_tweet(tweet_id: UUID = Path(...)):
+    """
+    Delete Tweet by ID
+
+    This path operation delete one tweet by ID in the app
+
+    Parameters:
+    - Path parameters:
+        - **tweet_id: UUID**
+
+    Returns a json object with the tweet information
+    """
+
+    with open("./tweets.json", "r+", encoding="utf-8") as f:
+        results: list = json.loads(f.read())
+        tweet_id_str = str(tweet_id)
+        index_found = findIndex(
+            lambda _, tweet: tweet["tweet_id"] == tweet_id_str, results)
+
+        if index_found == -1:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="¡This tweet doesn't exists!")
+
+        tweet = results[index_found]
+        del results[index_found]
+        f.seek(0)
+        f.write(json.dumps(results, indent=2))
+        f.truncate()
+        return tweet
